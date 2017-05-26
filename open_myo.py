@@ -30,6 +30,12 @@ class Services(btle.Peripheral):
         if length in range(1, 4):
             self.writeCharacteristic(0x19, struct.pack('<3B', 3, 1, length))
 
+    def sleep_mode(self, mode):
+        self.writeCharacteristic(0x19, struct.pack('<3B', 9, 1, mode))
+
+    def power_off(self):
+        self.writeCharacteristic(0x19, b'\x04\x00')
+
     # Suscribe to battery notifications
     def battery_notifications(self):
         self.writeCharacteristic(0x12, b'\x01\x10')

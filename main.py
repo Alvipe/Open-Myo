@@ -3,6 +3,7 @@ import open_myo as myo
 myo_mac_addr = myo.get_myo()
 print("MAC address: %s" % myo_mac_addr)
 myo_device = myo.Device()
+myo_device.services.sleep_mode(1) # never sleep
 myo_device.services.set_leds([128, 128, 255], [128, 128, 255])  # purple logo and bar LEDs)
 myo_device.services.vibrate(1) # short vibration
 fw = myo_device.services.firmware()
