@@ -83,16 +83,16 @@ class Device(btle.DefaultDelegate):
         # Notification handle of the IMU data characteristic
         elif cHandle == 0x1c:
             values = struct.unpack('<10h', data)
-            quat = values[:4]
-            acc = values[4:7]
-            gyro = values[7:10]
+            quat = [x/16384.0 for x in values[:4]]
+            acc = [x/2048.0 for x in values[4:7]]
+            gyro = [x/16.0 for x in values[7:10]]
             print(quat)
         # Notification handle of the battery data characteristic
         elif cHandle == 0x11:
             batt = ord(data)
             print("Battery level: %d" % batt)
         else:
-            print('data with unknown attr: %02X %s' % (attr, p))
+            print('Data with unknown attr: %02X' % cHandle)
 
 def get_myo(mac=None):
     if mac is not None:
