@@ -12,8 +12,9 @@ print("Battery level: %d" % batt)
 myo_device.services.emg_filt_notifications()
 # myo_device.services.emg_raw_notifications()
 myo_device.services.imu_notifications()
+myo_device.services.classifier_notifications()
 # myo_device.services.battery_notifications()
-myo_device.services.set_mode(myo.emg_mode.FILT, myo.imu_mode.ALL, myo.classifier_mode.OFF)
+myo_device.services.set_mode(myo.EmgMode.FILT, myo.ImuMode.DATA, myo.ClassifierMode.ON)
 while True:
     if myo_device.services.waitForNotifications(1):
         continue

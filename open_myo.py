@@ -1,6 +1,7 @@
 import sys
 import struct
 import time
+from enum import Enum
 from bluepy import btle
 
 class Services(btle.Peripheral):
@@ -87,6 +88,18 @@ class Device(btle.DefaultDelegate):
             acc = [x/2048.0 for x in values[4:7]]
             gyro = [x/16.0 for x in values[7:10]]
             print(quat)
+        # Notification handle of the classifier data characteristic
+        elif cHandle == 0x23:
+            event_type, value, x_direction, _, _, _ = struct.unpack('<6B', data)
+            print(event_type, value, x_direction)
+            if event_type == ClassifierEventType.ARM_SYNCED:  # on arm
+                print(Arm(value), XDirection(x_direction))
+            elif event_type == ClassifierEventType.ARM_UNSYNCED:  # removed from arm
+                print(Arm.UNKNOWN, XDirection.UNKNOWN)
+            elif event_type == ClassifierEventType.POSE:  # pose
+                print(Pose(value))
+            elif event_type == ClassifierEventType.SYNC_FAILED:
+                print("Sync failed, please perform sync gesture.")
         # Notification handle of the battery data characteristic
         elif cHandle == 0x11:
             batt = ord(data)
@@ -107,19 +120,46 @@ def get_myo(mac=None):
                 if j[0] == 6 and j[2] == '4248124a7f2c4847b9de04a9010006d5':
                     return str(i.addr).upper()
 
-class emg_mode:
+class EmgMode:
     OFF = 0x00
     FILT = 0x01
     RAW = 0x02
     RAW_UNFILT = 0x03
 
-class imu_mode:
+class ImuMode:
     OFF = 0x00
     DATA = 0x01
     EVENTS = 0x02
     ALL = 0x03
     RAW = 0x04
 
-class classifier_mode:
+class ClassifierMode:
     OFF = 0x00
     ON = 0x01
+
+class ClassifierEventType:
+    ARM_SYNCED = 0x01
+    ARM_UNSYNCED = 0x02
+    POSE = 0x03
+    UNLOCKED = 0x04
+    LOCKED = 0x05
+    SYNC_FAILED = 0x06
+
+class Pose(Enum):
+    REST = 0x00
+    FIST = 0x01
+    WAVE_IN = 0x02
+    WAVE_OUT = 0x03
+    FINGERS_SPREAD = 0x04
+    DOUBLE_TAP = 0x05
+    UNKNOWN = 0xff
+
+class Arm(Enum):
+    RIGHT = 0x01
+    LEFT = 0x02
+    UNKNOWN = 0xff
+
+class XDirection(Enum):
+    WRIST = 0x01
+    ELBOW = 0x02
+    UNKNOWN = 0xff
