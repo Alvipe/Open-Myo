@@ -71,6 +71,12 @@ class Device(btle.DefaultDelegate):
         self.services = Services(mac=get_myo(mac))
         self.services.setDelegate(self)
 
+        self.emg_event_handlers = []
+        self.imu_event_handlers = []
+        self.sync_event_handlers = []
+        self.classifier_event_handlers = []
+        self.battery_event_handlers = []
+
     def handleNotification(self, cHandle, data):
         # Notification handles of the 4 EMG data characteristics (raw)
         if cHandle == 0x2b or cHandle == 0x2e or cHandle == 0x31 or cHandle == 0x34:
@@ -81,37 +87,71 @@ class Device(btle.DefaultDelegate):
             '''
             emg1 = struct.unpack('<8b', data[:8])
             emg2 = struct.unpack('<8b', data[8:])
-            print(emg1)
-            print(emg2)
+            self.on_emg(emg1)
+            self.on_emg(emg2)
         # Notification handle of the EMG data characteristic (filtered)
         elif cHandle == 0x27:
             emg_filt = struct.unpack('<8H', data[:16])
-            print(emg_filt)
+            self.on_emg(emg_filt)
         # Notification handle of the IMU data characteristic
         elif cHandle == 0x1c:
             values = struct.unpack('<10h', data)
             quat = [x/16384.0 for x in values[:4]]
             acc = [x/2048.0 for x in values[4:7]]
             gyro = [x/16.0 for x in values[7:10]]
-            print(quat)
+            self.on_imu(quat, acc, gyro)
         # Notification handle of the classifier data characteristic
         elif cHandle == 0x23:
             event_type, value, x_direction, _, _, _ = struct.unpack('<6B', data)
-            print(event_type, value, x_direction)
             if event_type == ClassifierEventType.ARM_SYNCED:  # on arm
-                print(Arm(value), XDirection(x_direction))
+                self.on_sync(Arm(value), XDirection(x_direction))
             elif event_type == ClassifierEventType.ARM_UNSYNCED:  # removed from arm
-                print(Arm.UNKNOWN, XDirection.UNKNOWN)
+                self.on_sync(Arm.UNKNOWN, XDirection.UNKNOWN)
             elif event_type == ClassifierEventType.POSE:  # pose
-                print(Pose(value))
+                self.on_classifier(Pose(value))
             elif event_type == ClassifierEventType.SYNC_FAILED:
                 print("Sync failed, please perform sync gesture.")
         # Notification handle of the battery data characteristic
         elif cHandle == 0x11:
             batt = ord(data)
-            print("Battery level: %d" % batt)
+            self.on_battery(batt)
         else:
             print('Data with unknown attr: %02X' % cHandle)
+
+    def add_emg_event_handler(self, event_handler):
+        self.emg_event_handlers.append(event_handler)
+
+    def add_imu_event_handler(self, event_handler):
+        self.imu_event_handlers.append(event_handler)
+
+    def add_sync_event_handler(self, event_handler):
+        self.sync_event_handlers.append(event_handler)
+
+    def add_classifier_event_hanlder(self, event_handler):
+        self.classifier_event_handlers.append(event_handler)
+
+    def add_battery_event_handler(self, event_handler):
+        self.battery_event_handlers.append(event_handler)
+
+    def on_emg(self, emg):
+        for event_handler in self.emg_event_handlers:
+            event_handler(emg)
+
+    def on_imu(self, quat, acc, gyro):
+        for event_handler in self.imu_event_handlers:
+            event_handler(quat, acc, gyro)
+
+    def on_sync(self, arm, x_direction):
+        for event_handler in self.sync_event_handlers:
+            event_handler(arm, x_direction)
+
+    def on_classifier(self, pose):
+        for event_handler in self.classifier_event_handlers:
+            event_handler(pose)
+
+    def on_battery(self, batt):
+        for event_handler in self.battery_event_handlers:
+            event_handler(batt)
 
 def get_myo(mac=None):
     if mac is not None:
