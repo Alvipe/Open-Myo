@@ -12,56 +12,56 @@ class Services(btle.Peripheral):
 
     # Get the firmware version
     def firmware(self):
-        hex_fw = self.readCharacteristic(0x17)
+        hex_fw = self.readCharacteristic(ReadHandle.FIRMWARE)
         fw = struct.unpack('<4h', hex_fw)
         return fw
 
     # Get the battery level
     def battery(self):
-        hex_batt = self.readCharacteristic(0x11)
+        hex_batt = self.readCharacteristic(ReadHandle.BATTERY)
         batt = ord(hex_batt)
         return batt
 
     # Change the color of the logo and bar LEDs
     def set_leds(self, logo, line):
-        self.writeCharacteristic(0x19, struct.pack('<8B', 6, 6, *(logo + line)))
+        self.writeCharacteristic(WriteHandle.COMMAND, struct.pack('<8B', 6, 6, *(logo + line)))
 
     def vibrate(self, length):
         if length in range(1, 4):
-            self.writeCharacteristic(0x19, struct.pack('<3B', 3, 1, length))
+            self.writeCharacteristic(WriteHandle.COMMAND, struct.pack('<3B', 3, 1, length))
 
     def sleep_mode(self, mode):
-        self.writeCharacteristic(0x19, struct.pack('<3B', 9, 1, mode))
+        self.writeCharacteristic(WriteHandle.COMMAND, struct.pack('<3B', 9, 1, mode))
 
     def power_off(self):
-        self.writeCharacteristic(0x19, b'\x04\x00')
+        self.writeCharacteristic(WriteHandle.COMMAND, b'\x04\x00')
 
     # Suscribe to battery notifications
     def battery_notifications(self):
-        self.writeCharacteristic(0x12, b'\x01\x10')
+        self.writeCharacteristic(WriteHandle.BATTERY, b'\x01\x10')
 
     # Suscribe to raw EMG notifications
     def emg_raw_notifications(self):
-        self.writeCharacteristic(0x2c, b'\x01\x00')
-        self.writeCharacteristic(0x2f, b'\x01\x00')
-        self.writeCharacteristic(0x32, b'\x01\x00')
-        self.writeCharacteristic(0x35, b'\x01\x00')
+        self.writeCharacteristic(WriteHandle.EMG0, b'\x01\x00')
+        self.writeCharacteristic(WriteHandle.EMG1, b'\x01\x00')
+        self.writeCharacteristic(WriteHandle.EMG2, b'\x01\x00')
+        self.writeCharacteristic(WriteHandle.EMG3, b'\x01\x00')
 
     # Suscribe to filtered EMG notifications
     def emg_filt_notifications(self):
-        self.writeCharacteristic(0x28, b'\x01\x00')
+        self.writeCharacteristic(WriteHandle.EMG_FILT, b'\x01\x00')
 
     # Suscribe to IMU notifications
     def imu_notifications(self):
-        self.writeCharacteristic(0x1d, b'\x01\x00')
+        self.writeCharacteristic(WriteHandle.IMU, b'\x01\x00')
 
     # Suscribe to classifier notifications
     def classifier_notifications(self):
-        self.writeCharacteristic(0x24, b'\x02\x00')
+        self.writeCharacteristic(WriteHandle.CLASSIFIER, b'\x02\x00')
 
     def set_mode(self, emg_mode, imu_mode, classifier_mode):
         command_string = struct.pack('<5B', 1, 3, emg_mode, imu_mode, classifier_mode)
-        self.writeCharacteristic(0x19, command_string)
+        self.writeCharacteristic(WriteHandle.COMMAND, command_string)
 
 class Device(btle.DefaultDelegate):
     # bluepy functions which receive Bluetooth messages asynchronously,
@@ -79,29 +79,31 @@ class Device(btle.DefaultDelegate):
 
     def handleNotification(self, cHandle, data):
         # Notification handles of the 4 EMG data characteristics (raw)
-        if cHandle == 0x2b or cHandle == 0x2e or cHandle == 0x31 or cHandle == 0x34:
+        if cHandle == ReadHandle.EMG0 or cHandle == ReadHandle.EMG1 or cHandle == ReadHandle.EMG2 or cHandle == ReadHandle.EMG3:
             '''According to http://developerblog.myo.com/myocraft-emg-in-the-bluetooth-protocol/
             each characteristic sends two secuential readings in each update,
             so the received payload is split in two samples. According to the
             Myo BLE specification, the data type of the EMG samples is int8_t.
             '''
+            emg_raw = []
             emg1 = struct.unpack('<8b', data[:8])
             emg2 = struct.unpack('<8b', data[8:])
-            self.on_emg(emg1)
-            self.on_emg(emg2)
+            emg_raw.append(emg1)
+            emg_raw.append(emg2)
+            self.on_emg(emg_raw)
         # Notification handle of the EMG data characteristic (filtered)
-        elif cHandle == 0x27:
+        elif cHandle == ReadHandle.EMG_FILT:
             emg_filt = struct.unpack('<8H', data[:16])
             self.on_emg(emg_filt)
         # Notification handle of the IMU data characteristic
-        elif cHandle == 0x1c:
+        elif cHandle == ReadHandle.IMU:
             values = struct.unpack('<10h', data)
             quat = [x/16384.0 for x in values[:4]]
             acc = [x/2048.0 for x in values[4:7]]
             gyro = [x/16.0 for x in values[7:10]]
             self.on_imu(quat, acc, gyro)
         # Notification handle of the classifier data characteristic
-        elif cHandle == 0x23:
+        elif cHandle == ReadHandle.CLASSIFIER:
             event_type, value, x_direction, _, _, _ = struct.unpack('<6B', data)
             if event_type == ClassifierEventType.ARM_SYNCED:  # on arm
                 self.on_sync(Arm(value), XDirection(x_direction))
@@ -112,7 +114,7 @@ class Device(btle.DefaultDelegate):
             elif event_type == ClassifierEventType.SYNC_FAILED:
                 print("Sync failed, please perform sync gesture.")
         # Notification handle of the battery data characteristic
-        elif cHandle == 0x11:
+        elif cHandle == ReadHandle.BATTERY:
             batt = ord(data)
             self.on_battery(batt)
         else:
@@ -165,6 +167,28 @@ def get_myo(mac=None):
             for j in i.getScanData():
                 if j[0] == 6 and j[2] == '4248124a7f2c4847b9de04a9010006d5':
                     return str(i.addr).upper()
+
+class ReadHandle:
+    BATTERY = 0x11
+    FIRMWARE = 0x17
+    EMG0 = 0x2b
+    EMG1 = 0x2e
+    EMG2 = 0x31
+    EMG3 = 0x34
+    EMG_FILT = 0x27
+    IMU = 0x1c
+    CLASSIFIER = 0x23
+
+class WriteHandle:
+    COMMAND = 0x19
+    BATTERY = 0x12
+    EMG0 = 0x2c
+    EMG1 = 0x2f
+    EMG2 = 0x32
+    EMG3 = 0x35
+    EMG_FILT = 0x28
+    IMU = 0x1d
+    CLASSIFIER = 0x24
 
 class EmgMode:
     OFF = 0x00
