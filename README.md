@@ -1,4 +1,4 @@
-#Open-Myo
+# Open-Myo
 Python module to get data from a Myo armband using a generic Bluetooth LE interface.
 
 ## Installation and usage
