@@ -13,6 +13,8 @@ All code using the bluepy module must run with root permissions. To run the exam
 
 ``$ sudo python main.py``
 
+The Open Myo module **only works on Linux**, as the bluepy module is only available for Linux.
+
 ## Acknowledgements
 
 Thanks to [mamo91](https://github.com/mamo91) and [MyrikLD](https://github.com/MyrikLD), since your Dongleless-myo code ([here](https://github.com/mamo91/Dongleless-myo) and [here](https://github.com/MyrikLD/Dongleless-myo)) has served as a starting point for this project. Thank you both for sharing your work! :D
