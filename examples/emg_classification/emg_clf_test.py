@@ -7,7 +7,7 @@ Created on Sat Feb 10 19:12:54 2018
 
 from emgesture import fextraction as fex
 import numpy as np
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 import matplotlib.pyplot as plt
 import pickle
@@ -99,4 +99,3 @@ plt.scatter(X[5*nSegments*nIterations:6*nSegments*nIterations,0],X[5*nSegments*n
 plt.scatter(X[6*nSegments*nIterations:7*nSegments*nIterations,0],X[6*nSegments*nIterations:7*nSegments*nIterations,1],c='orange',label=gestures.keys()[6])
 plt.legend(scatterpoints=1,loc='center left', bbox_to_anchor=(1, 0.5))
 plt.show()
-
