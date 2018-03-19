@@ -14,44 +14,44 @@ import pickle
 
 # Data loading
 with open("../emg_data/emg_data_20180210-145505.pkl",'r') as fp:
-    gestures = pickle.load(fp)
+    emg_data = pickle.load(fp)
 
-nGestures = len(gestures)
-nIterations = [len(value) for value in gestures.values()][0]
-nChannels = 8
-nSignals = nGestures*nIterations*nChannels
+n_classes = len(emg_data)
+n_iterations = [len(value) for value in emg_data.values()][0]
+n_channels = 8
+n_signals = n_classes*n_iterations*n_channels
 emg = list()
 segmented_emg = list()
 class_labels = list()
 
-#for m in range(1,nGestures+1):
-#    for i in range(nIterations):
-#        for c in range(1,nChannels+1):
+#for m in range(1,n_classes+1):
+#    for i in range(n_iterations):
+#        for c in range(1,n_channels+1):
 #            emg.append(emg_data['motion'+str(m)+'_ch'+str(c)][:,i]) #motion1_ch1_i1, motion1_ch2_i1, motion1_ch1_i2, motion1_ch2_i2
 
-for g in gestures.keys():
+for g in emg_data.keys():
     class_labels.append(g)
-    for i in range(nIterations):
-        for c in range(nChannels):
-            emg.append(np.array(zip(*gestures[g][i])[c][0:999]))
+    for i in range(n_iterations):
+        for c in range(n_channels):
+            emg.append(np.array(zip(*emg_data[g][i])[c][0:999]))
 
-#for z in range(nSignals):
+#for z in range(n_signals):
 #    emg[z] = emg[z]*(5/2)/2**24
 
 # Segmentation
-for n in range(nSignals):
-    segmented_emg.append(fex.segmentation(emg[n],samples=50))
+for n in range(n_signals):
+    segmented_emg.append(fex.segmentation(emg[n],n_samples=50))
 
 # Feature calculation
 feature_list = [fex.mav, fex.rms, fex.var, fex.ssi, fex.zc, fex.wl, fex.ssc, fex.wamp]
 
-nSegments = len(segmented_emg[0][0])
-nFeatures = len(feature_list)
-feature_matrix = np.zeros((nGestures*nIterations*nSegments,nFeatures*nChannels))
+n_segments = len(segmented_emg[0][0])
+n_features = len(feature_list)
+feature_matrix = np.zeros((n_classes*n_iterations*n_segments,n_features*n_channels))
 n = 0
 
-for i in range(0,nSignals,nChannels):
-    for j in range(nSegments):
+for i in range(0,n_signals,n_channels):
+    for j in range(n_segments):
         feature_matrix[n] = fex.features((segmented_emg[i][:,j],
                                           segmented_emg[i+1][:,j],
                                           segmented_emg[i+2][:,j],
@@ -63,7 +63,7 @@ for i in range(0,nSignals,nChannels):
         n = n + 1
 
 # Target matrix generation
-y = fex.generate_target(nIterations*nSegments,class_labels)
+y = fex.generate_target(n_iterations*n_segments,class_labels)
 
 # Dimensionality reduction and feature scaling
 [X,reductor,scaler] = fex.feature_scaling(feature_matrix, y)
@@ -92,12 +92,12 @@ print("Classification accuracy = %0.5f." %(classifier.score(X_test,y_test)))
 #grid.fit(X,y)
 #print("The best parameters are %s with a score of %0.2f" % (grid.best_params_,grid.best_score_))
 
-plt.scatter(X[0:nSegments*nIterations,0],X[0:nSegments*nIterations,1],c='red',label=class_labels[0])
-plt.scatter(X[nSegments*nIterations:2*nSegments*nIterations,0],X[nSegments*nIterations:2*nSegments*nIterations,1],c='blue',label=class_labels[1])
-plt.scatter(X[2*nSegments*nIterations:3*nSegments*nIterations,0],X[2*nSegments*nIterations:3*nSegments*nIterations,1],c='green',label=class_labels[2])
-plt.scatter(X[3*nSegments*nIterations:4*nSegments*nIterations,0],X[3*nSegments*nIterations:4*nSegments*nIterations,1],c='cyan',label=class_labels[3])
-plt.scatter(X[4*nSegments*nIterations:5*nSegments*nIterations,0],X[4*nSegments*nIterations:5*nSegments*nIterations,1],c='magenta',label=class_labels[4])
-plt.scatter(X[5*nSegments*nIterations:6*nSegments*nIterations,0],X[5*nSegments*nIterations:6*nSegments*nIterations,1],c='lime',label=class_labels[5])
-plt.scatter(X[6*nSegments*nIterations:7*nSegments*nIterations,0],X[6*nSegments*nIterations:7*nSegments*nIterations,1],c='orange',label=class_labels[6])
+plt.scatter(X[0:n_segments*n_iterations,0],X[0:n_segments*n_iterations,1],c='red',label=class_labels[0])
+plt.scatter(X[n_segments*n_iterations:2*n_segments*n_iterations,0],X[n_segments*n_iterations:2*n_segments*n_iterations,1],c='blue',label=class_labels[1])
+plt.scatter(X[2*n_segments*n_iterations:3*n_segments*n_iterations,0],X[2*n_segments*n_iterations:3*n_segments*n_iterations,1],c='green',label=class_labels[2])
+plt.scatter(X[3*n_segments*n_iterations:4*n_segments*n_iterations,0],X[3*n_segments*n_iterations:4*n_segments*n_iterations,1],c='cyan',label=class_labels[3])
+plt.scatter(X[4*n_segments*n_iterations:5*n_segments*n_iterations,0],X[4*n_segments*n_iterations:5*n_segments*n_iterations,1],c='magenta',label=class_labels[4])
+plt.scatter(X[5*n_segments*n_iterations:6*n_segments*n_iterations,0],X[5*n_segments*n_iterations:6*n_segments*n_iterations,1],c='lime',label=class_labels[5])
+plt.scatter(X[6*n_segments*n_iterations:7*n_segments*n_iterations,0],X[6*n_segments*n_iterations:7*n_segments*n_iterations,1],c='orange',label=class_labels[6])
 plt.legend(scatterpoints=1,loc='center left', bbox_to_anchor=(1, 0.5))
 plt.show()

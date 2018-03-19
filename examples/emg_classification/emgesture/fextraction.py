@@ -10,15 +10,14 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.pipeline import make_pipeline
 
-def segmentation(emg, samples = 150):
-    N = samples # number of samples per segment
-    S = int(np.floor(emg.shape[0]/N)) # number of segments
+def segmentation(emg, n_samples = 150):
+    n_segments = int(np.floor(emg.shape[0]/n_samples)) # number of segments
     length = 0
-    segmented_emg = np.zeros((N,S))
-    for s in range(S):
-        for n in range(length,N+length):
+    segmented_emg = np.zeros((n_samples,n_segments))
+    for s in range(n_segments):
+        for n in range(length,n_samples+length):
             segmented_emg[n-length,s] = emg[n] # 2D matrix with a EMG signal divided in s segments, each one with n samples
-        length = length + N
+        length = length + n_samples
     length = 0
     return segmented_emg
 
@@ -39,13 +38,13 @@ def ssi(segment):
     return ssi
 
 def zc(segment):
-    nz_segment = []
+    nz_segment = list()
     nz_indices = np.nonzero(segment)[0] #Finds the indices of the segment with nonzero values
-    for m in nz_indices:
-        nz_segment.append(segment[m]) #The new segment contains only nonzero values    
-    N = len(nz_segment)
+    for i in nz_indices:
+        nz_segment.append(segment[i]) #The new segment contains only nonzero values
+    nz_segment_length = len(nz_segment)
     zc = 0
-    for n in range(N-1):
+    for n in range(nz_segment_length-1):
         if((nz_segment[n]*nz_segment[n+1]<0) and np.abs(nz_segment[n]-nz_segment[n+1]) >= 1e-4):
             zc = zc + 1
     return zc
@@ -63,17 +62,20 @@ def wl(segment):
 #    return ssc
 
 def ssc(segment):
-    N = len(segment)
+    segment_length = len(segment)
     ssc = 0
-    for n in range(1,N-1):
-        if ((segment[n]>segment[n-1] and segment[n]>segment[n+1]) or (segment[n]<segment[n-1] and segment[n]<segment[n+1]) and ((np.abs(segment[n]-segment[n+1])>=1e-4) or (np.abs(segment[n]-segment[n-1])>=1e-4))):
+    for n in range(1,segment_length-1):
+        if ((segment[n]>segment[n-1] and segment[n]>segment[n+1])
+            or (segment[n]<segment[n-1] and segment[n]<segment[n+1])
+            and ((np.abs(segment[n]-segment[n+1])>=1e-4)
+                or (np.abs(segment[n]-segment[n-1])>=1e-4))):
             ssc += 1
     return ssc
 
 def wamp(segment):
-    N = len(segment)
+    segment_length = len(segment)
     wamp = 0
-    for n in range(N-1):
+    for n in range(segment_length-1):
         if np.abs(segment[n]-segment[n+1])>1e-4:
             wamp += 1
     return wamp
@@ -88,13 +90,13 @@ def features(segment,feature_list):
         features[0,i+3] = feature(segment[3])
         features[0,i+4] = feature(segment[4])
         features[0,i+5] = feature(segment[5])
-        features[0,i+6] = feature(segment[6])        
+        features[0,i+6] = feature(segment[6])
         features[0,i+7] = feature(segment[7])
         i +=  len(segment)
     return features
 
 def feature_scaling(feature_matrix,target,reductor=None,scaler=None):
-    lda = LDA(n_components=2)    
+    lda = LDA(n_components=2)
     minmax = MinMaxScaler(feature_range=(-1,1))
     if not reductor:
         reductor = lda.fit(feature_matrix,target)
@@ -104,13 +106,6 @@ def feature_scaling(feature_matrix,target,reductor=None,scaler=None):
     feature_matrix_scaled = scaler.transform(feature_matrix_lda)
     return feature_matrix_scaled,reductor,scaler
 
-#def gestures(nSamples,nGestures):
-#    gestures = []
-#    for m in range(nGestures):
-#        gestures.append((m*np.ones((nSamples))))
-#    gestures = np.array(gestures).ravel()
-#    return gestures
-
 def generate_target(n_samples,labels):
     target = list()
     for l in range(len(labels)):
@@ -118,13 +113,3 @@ def generate_target(n_samples,labels):
             target.append(labels[l])
     target_array = np.array(target).ravel()
     return target_array
-
-#def feature_scaling(feature_matrix,target,scaler=None):
-#    lda = LDA(n_components=2)
-#    minmax = MinMaxScaler(feature_range=(-1,1))
-#    if not scaler:
-#        scaler = make_pipeline(lda,minmax)
-#        scaler.fit(feature_matrix,target)
-#    feat_lda_scaled = scaler.transform(feature_matrix)
-#
-#    return feat_lda_scaled,scaler
