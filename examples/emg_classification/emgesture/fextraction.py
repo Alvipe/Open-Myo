@@ -104,19 +104,27 @@ def feature_scaling(feature_matrix,target,reductor=None,scaler=None):
     feature_matrix_scaled = scaler.transform(feature_matrix_lda)
     return feature_matrix_scaled,reductor,scaler
 
-def gestures(nSamples,nGestures):
-    gestures = []
-    for m in range(nGestures):
-        gestures.append((m*np.ones((nSamples))))
-    gestures = np.array(gestures).ravel()
-    return gestures
+#def gestures(nSamples,nGestures):
+#    gestures = []
+#    for m in range(nGestures):
+#        gestures.append((m*np.ones((nSamples))))
+#    gestures = np.array(gestures).ravel()
+#    return gestures
+
+def generate_target(n_samples,labels):
+    target = list()
+    for l in range(len(labels)):
+        for s in range(n_samples):
+            target.append(labels[l])
+    target_array = np.array(target).ravel()
+    return target_array
 
 #def feature_scaling(feature_matrix,target,scaler=None):
-#    lda = LDA(n_components=2)    
+#    lda = LDA(n_components=2)
 #    minmax = MinMaxScaler(feature_range=(-1,1))
 #    if not scaler:
 #        scaler = make_pipeline(lda,minmax)
 #        scaler.fit(feature_matrix,target)
 #    feat_lda_scaled = scaler.transform(feature_matrix)
-#    
+#
 #    return feat_lda_scaled,scaler
