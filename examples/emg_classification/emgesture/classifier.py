@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Nov  6 14:10:10 2015
-
-@author: Alvaro
-"""
+#  Copyright 2018 Alvaro Villoslada (Alvipe)
+#  This file is part of Open Myo.
+#  Open Myo is distributed under a GPL 3.0 license
 
 from sklearn.svm import SVC
 from sklearn.externals import joblib

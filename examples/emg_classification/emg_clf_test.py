@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Feb 10 19:12:54 2018
-
-@author: Alvaro
-"""
+#  Copyright 2018 Alvaro Villoslada (Alvipe)
+#  This file is part of Open Myo.
+#  Open Myo is distributed under a GPL 3.0 license
 
 from emgesture import fextraction as fex
 import numpy as np

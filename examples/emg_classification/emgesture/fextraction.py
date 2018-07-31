@@ -1,9 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Sep 28 10:33:36 2015
-
-@author: Alvaro
-"""
+#  Copyright 2018 Alvaro Villoslada (Alvipe)
+#  This file is part of Open Myo.
+#  Open Myo is distributed under a GPL 3.0 license
 
 import numpy as np
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA

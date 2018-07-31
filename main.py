@@ -1,3 +1,7 @@
+#  Copyright 2018 Alvaro Villoslada (Alvipe)
+#  This file is part of Open Myo.
+#  Open Myo is distributed under a GPL 3.0 license
+
 import open_myo as myo
 
 def process_emg(emg):
