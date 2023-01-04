@@ -161,6 +161,7 @@ class Device(btle.DefaultDelegate):
 
 def get_myo(mac=None):
     if mac is not None:
+        mac = mac.lower()
         while True:
             for i in btle.Scanner(0).scan(1):
                 if i.addr == mac:
