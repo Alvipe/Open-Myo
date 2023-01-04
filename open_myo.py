@@ -84,7 +84,7 @@ class Device(btle.DefaultDelegate):
     def handleNotification(self, cHandle, data):
         # Notification handles of the 4 EMG data characteristics (raw)
         if cHandle == ReadHandle.EMG0 or cHandle == ReadHandle.EMG1 or cHandle == ReadHandle.EMG2 or cHandle == ReadHandle.EMG3:
-            '''According to http://developerblog.myo.com/myocraft-emg-in-the-bluetooth-protocol/
+            '''According to http://web.archive.org/web/20220701041237/http://developerblog.myo.com/myocraft-emg-in-the-bluetooth-protocol/
             each characteristic sends two secuential readings in each update,
             so the received payload is split in two samples. According to the
             Myo BLE specification, the data type of the EMG samples is int8_t.
